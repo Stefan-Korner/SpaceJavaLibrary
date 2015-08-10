@@ -25,5 +25,5 @@ tst:
 PKG_UTIL_TEST: \
 	DU_TEST.class
 
-DU_TEST.class: DU_TEST.java
+DU_TEST.class: DU_TEST.java ../DU.java
 	cd ../../..; javac SpaceJavaLibrary/UTIL/test/DU_TEST.java
