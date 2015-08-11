@@ -19,7 +19,8 @@ import SpaceJavaLibrary.UTIL.DU;
 
 public class DU_TEST
 {
-  static final int[] _DATA1 = {
+  // binary test data
+  static final int[] DATA1 = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -52,46 +53,452 @@ public class DU_TEST
     0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
     0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7,
     0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF};
-  static final byte[] DATA1 = DU.toByteArray(_DATA1);
-  static final int[] _DATA2 = {0x00, 0x01, 0x02, 0x03, 0x44, 0x50, 0x6F, 0xFF};
-  static final byte[] DATA2 = DU.toByteArray(_DATA2);
+  static final int[] DATA2 = {0x00, 0x01, 0x02, 0x03, 0x44, 0x50, 0x6F, 0xFF};
+  static final int[] DATA3 = {0x02, 0xFF, 0xFF};
+  static final int[] DATA4 = {0x01, 0x02, 0x03, 0x04, 0x05};
+  static final int[] DATA5 = {0x33, 0x55};
+  // stingified test data
+  static final String DATA1_STR = "\n" +
+    "0000 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f ................\n" +
+    "0010 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f ................\n" +
+    "0020 20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f  !\"#$%&'()*+,-./\n" +
+    "0030 30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 0123456789:;<=>?\n" +
+    "0040 40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f @ABCDEFGHIJKLMNO\n" +
+    "0050 50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f PQRSTUVWXYZ[\\]^_\n" +
+    "0060 60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f `abcdefghijklmno\n" +
+    "0070 70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f pqrstuvwxyz{|}~.\n" +
+    "0080 80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f ................\n" +
+    "0090 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f ................\n" +
+    "00a0 a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 aa ab ac ad ae af ................\n" +
+    "00b0 b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf ................\n" +
+    "00c0 c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf ................\n" +
+    "00d0 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 da db dc dd de df ................\n" +
+    "00e0 e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef ................\n" +
+    "00f0 f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff ................";
+  // for testing the accessor methods
+  static final DU.BitAccessor BIT_FIELD1 = new DU.BitAccessor(48, 7);
+  static final DU.ByteAccessor BYTE_FIELD1 = new  DU.ByteAccessor(6, 2);
+  static final DU.IntAccessor INT_FIELD1 = new DU.IntAccessor(3, 2);
 
-  public static void main(String[] args)
+  //---------------------------------------------------------------------------
+  static void TestAssert(boolean p_expression) throws Exception
+  //---------------------------------------------------------------------------
   {
-    DU du0 = new DU();
-    System.out.println("du0 = " + du0.dumpStr());
-    DU du1 = new DU(DATA1);
-    System.out.println("du1 = " + du1.dumpStr());
-    DU du2 = new DU(DATA2);
-    System.out.println("du2 = " + du2.dumpStr());
+    if(!p_expression)
+    {
+      throw new Exception("TestAssert failed");
+    }
+  }
+
+  //---------------------------------------------------------------------------
+  static void testGetBits(DU p_du,
+                          int p_bitPos,
+                          int p_bitLength,
+                          int p_value) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    int readValue = p_du.getBits(p_bitPos, p_bitLength);
+    System.out.println("readValue = " + String.format("%08x", readValue));
+    TestAssert(readValue == p_value);
+  }
+
+  //---------------------------------------------------------------------------
+  static void testSetBits(DU p_du,
+                          int p_bitPos,
+                          int p_bitLength,
+                          int p_value,
+                          String p_expectedDump) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    p_du.setBits(p_bitPos, p_bitLength, p_value);
+    String dumpResult = p_du.toString();
+    System.out.println("du = " + dumpResult);
+    TestAssert(dumpResult.equals(p_expectedDump));
+  }
+
+  //---------------------------------------------------------------------------
+  static void testGetBitsException(DU p_du,
+                                   int p_bitPos,
+                                   int p_bitLength) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    boolean exRaised = false;
     try
     {
-      int int_48_01 = du2.getBits(48, 1);
-      System.out.println("int_48_01 = " + String.format("%08x", int_48_01));
-      int int_48_02 = du2.getBits(48, 2);
-      System.out.println("int_48_02 = " + String.format("%08x", int_48_02));
-      int int_48_03 = du2.getBits(48, 3);
-      System.out.println("int_48_03 = " + String.format("%08x", int_48_03));
-      int int_48_04 = du2.getBits(48, 4);
-      System.out.println("int_48_04 = " + String.format("%08x", int_48_04));
-      int int_48_05 = du2.getBits(48, 5);
-      System.out.println("int_48_05 = " + String.format("%08x", int_48_05));
-      int int_48_06 = du2.getBits(48, 6);
-      System.out.println("int_48_06 = " + String.format("%08x", int_48_06));
-      int int_48_07 = du2.getBits(48, 7);
-      System.out.println("int_48_07 = " + String.format("%08x", int_48_07));
-      int int_48_08 = du2.getBits(48, 8);
-      System.out.println("int_48_08 = " + String.format("%08x", int_48_08));
-      int int_48_16 = du2.getBits(48, 16);
-      System.out.println("int_48_16 = " + String.format("%08x", int_48_16));
-      int int_40_24 = du2.getBits(40, 24);
-      System.out.println("int_40_24 = " + String.format("%08x", int_40_24));
-      int int_32_32 = du2.getBits(32, 32);
-      System.out.println("int_32_32 = " + String.format("%08x", int_32_32));
+      exRaised = false;
+      int dummy = p_du.getBits(p_bitPos, p_bitLength);
+    }
+    catch(Exception ex)
+    {
+      System.out.println("expected getBits Exception = " + ex);
+      exRaised = true;
+    }
+    TestAssert(exRaised);
+  }
+
+  //---------------------------------------------------------------------------
+  static void testSetBitsException(DU p_du,
+                                   int p_bitPos,
+                                   int p_bitLength,
+                                   int p_value) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    boolean exRaised = false;
+    try
+    {
+      exRaised = false;
+      p_du.setBits(p_bitPos, p_bitLength, p_value);
+    }
+    catch(Exception ex)
+    {
+      System.out.println("expected setBits Exception = " + ex);
+      exRaised = true;
+    }
+    TestAssert(exRaised);
+  }
+
+  //---------------------------------------------------------------------------
+  static void testGetBytes(DU p_du,
+                           int p_bytePos,
+                           int p_byteLength,
+                           byte[] p_bytes) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    byte[] readBytes = p_du.getBytes(p_bytePos, p_byteLength);
+    System.out.println("readBytes = " + DU.byteArrayToString(readBytes));
+    for(int i = 0; i < p_byteLength; i++)
+    {
+      TestAssert(readBytes[i] == p_bytes[i]);
+    }
+  }
+
+  //---------------------------------------------------------------------------
+  static void testSetBytes(DU p_du,
+                           int p_bytePos,
+                           int p_byteLength,
+                           byte[] p_bytes,
+                           String p_expectedDump) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    p_du.setBytes(p_bytePos, p_byteLength, p_bytes);
+    String dumpResult = p_du.toString();
+    System.out.println("du = " + dumpResult);
+    TestAssert(dumpResult.equals(p_expectedDump));
+  }
+
+  //---------------------------------------------------------------------------
+  static void testGetBytesException(DU p_du,
+                                    int p_bytePos,
+                                    int p_byteLength) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    boolean exRaised = false;
+    try
+    {
+      exRaised = false;
+      byte[] dummy = p_du.getBytes(p_bytePos, p_byteLength);
+    }
+    catch(Exception ex)
+    {
+      System.out.println("expected getBytes Exception = " + ex);
+      exRaised = true;
+    }
+    TestAssert(exRaised);
+  }
+
+  //---------------------------------------------------------------------------
+  static void testSetBytesException(DU p_du,
+                                    int p_bytePos,
+                                    int p_byteLength,
+                                    byte[] p_bytes) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    boolean exRaised = false;
+    try
+    {
+      exRaised = false;
+      p_du.setBytes(p_bytePos, p_byteLength, p_bytes);
+    }
+    catch(Exception ex)
+    {
+      System.out.println("expected setBytes Exception = " + ex);
+      exRaised = true;
+    }
+    TestAssert(exRaised);
+  }
+
+  //---------------------------------------------------------------------------
+  static void testGetInt(DU p_du,
+                         int p_bytePos,
+                         int p_byteLength,
+                         int p_value) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    int readValue = p_du.getInt(p_bytePos, p_byteLength);
+    System.out.println("readValue = " + String.format("%08x", readValue));
+    TestAssert(readValue == p_value);
+  }
+
+  //---------------------------------------------------------------------------
+  static void testSetInt(DU p_du,
+                         int p_bytePos,
+                         int p_byteLength,
+                         int p_value,
+                         String p_expectedDump) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    p_du.setInt(p_bytePos, p_byteLength, p_value);
+    String dumpResult = p_du.toString();
+    System.out.println("du = " + dumpResult);
+    TestAssert(dumpResult.equals(p_expectedDump));
+  }
+
+  //---------------------------------------------------------------------------
+  static void testGetIntException(DU p_du,
+                                  int p_bytePos,
+                                  int p_byteLength) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    boolean exRaised = false;
+    try
+    {
+      exRaised = false;
+      int dummy = p_du.getInt(p_bytePos, p_byteLength);
+    }
+    catch(Exception ex)
+    {
+      System.out.println("expected getInt Exception = " + ex);
+      exRaised = true;
+    }
+    TestAssert(exRaised);
+  }
+
+  //---------------------------------------------------------------------------
+  static void testSetIntException(DU p_du,
+                                  int p_bytePos,
+                                  int p_byteLength,
+                                  int p_value) throws Exception
+  //---------------------------------------------------------------------------
+  {
+    boolean exRaised = false;
+    try
+    {
+      exRaised = false;
+      p_du.setInt(p_bytePos, p_byteLength, p_value);
+    }
+    catch(Exception ex)
+    {
+      System.out.println("expected setInt Exception = " + ex);
+      exRaised = true;
+    }
+    TestAssert(exRaised);
+  }
+
+  //---------------------------------------------------------------------------
+  public static void main(String[] args)
+  //---------------------------------------------------------------------------
+  {
+    String dumpResult;
+    try
+    {
+      // create data units
+      // *** TEST ***
+      DU du0 = new DU();
+      dumpResult = du0.toString();
+      System.out.println("du0 = " + dumpResult);
+      TestAssert(dumpResult.equals("EMPTY"));
+      // *** TEST ***
+      DU du1 = new DU(DU.toByteArray(DATA1));
+      dumpResult = du1.toString();
+      System.out.println("du1 = " + dumpResult);
+      TestAssert(dumpResult.equals(DATA1_STR));
+      // *** TEST ***
+      DU du2 = new DU(DU.toByteArray(DATA2));
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 01 02 03 44 50 6f ff                         ....DPo."));
+      // *** TEST ***
+      du2.resize(3);
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 01 02                                        ..."));
+      // *** TEST ***
+      du2.resize(8);
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 01 02 00 00 00 00 00                         ........"));
+      // *** TEST ***
+      du2.append(DU.toByteArray(DATA4));
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 01 02 00 00 00 00 00 01 02 03 04 05          ............."));
+      // *** TEST ***
+      du2.clear();
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("EMPTY"));
+      // *** TEST ***
+      du2.init(DU.toByteArray(DATA2));
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 01 02 03 44 50 6f ff                         ....DPo."));
+
+      // test bit field read access
+      testGetBits(du2, 48, 1, 0x00000000);
+      testGetBits(du2, 48, 2, 0x00000001);
+      testGetBits(du2, 48, 3, 0x00000003);
+      testGetBits(du2, 48, 4, 0x00000006);
+      testGetBits(du2, 48, 5, 0x0000000D);
+      testGetBits(du2, 48, 6, 0x0000001B);
+      testGetBits(du2, 48, 7, 0x00000037);
+      testGetBits(du2, 48, 8, 0x0000006F);
+      testGetBits(du2, 48, 16, 0x00006FFF);
+      testGetBits(du2, 40, 24, 0x00506FFF);
+      testGetBits(du2, 32, 32, 0x44506FFF);
+      // test accessor for reading
+      int intValue = du2.get(BIT_FIELD1);
+      System.out.println("intValue = " + String.format("%08x", intValue));
+      TestAssert(intValue == 0x00000037);
+      // expected failures checking
+      testGetBitsException(du0, 8, 8);
+      testGetBitsException(du2, -1, 8);
+      testGetBitsException(du2, 8, 0);
+      testGetBitsException(du2, 8, 33);
+      testGetBitsException(du2, 128, 8);
+
+      // test bit field write access
+      testSetBits(du2, 24, 32, 0x00000000, "\n" +
+        "0000 00 01 02 00 00 00 00 ff                         ........");
+      testSetBits(du2, 31, 1, 0x01, "\n" +
+        "0000 00 01 02 01 00 00 00 ff                         ........");
+      testSetBits(du2, 30, 2, 0x03, "\n" +
+        "0000 00 01 02 03 00 00 00 ff                         ........");
+      testSetBits(du2, 29, 3, 0x07, "\n" +
+        "0000 00 01 02 07 00 00 00 ff                         ........");
+      testSetBits(du2, 28, 4, 0x0F, "\n" +
+        "0000 00 01 02 0f 00 00 00 ff                         ........");
+      testSetBits(du2, 27, 5, 0x1F, "\n" +
+        "0000 00 01 02 1f 00 00 00 ff                         ........");
+      testSetBits(du2, 26, 6, 0x3F, "\n" +
+        "0000 00 01 02 3f 00 00 00 ff                         ...?....");
+      testSetBits(du2, 25, 7, 0x7F, "\n" +
+        "0000 00 01 02 7f 00 00 00 ff                         ........");
+      testSetBits(du2, 24, 8, 0xFF, "\n" +
+        "0000 00 01 02 ff 00 00 00 ff                         ........");
+      testSetBits(du2, 24, 32, 0x00000000, "\n" +
+        "0000 00 01 02 00 00 00 00 ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFF80, "\n" +
+        "0000 00 01 02 ff ff ff 80 ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFFC0, "\n" +
+        "0000 00 01 02 ff ff ff c0 ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFFE0, "\n" +
+        "0000 00 01 02 ff ff ff e0 ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFFF0, "\n" +
+        "0000 00 01 02 ff ff ff f0 ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFFF8, "\n" +
+        "0000 00 01 02 ff ff ff f8 ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFFFC, "\n" +
+        "0000 00 01 02 ff ff ff fc ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFF7F, "\n" +
+        "0000 00 01 02 ff ff ff 7f ff                         ........");
+      testSetBits(du2, 24, 32, 0xFFFFFFFF, "\n" +
+        "0000 00 01 02 ff ff ff ff ff                         ........");
+      // test accessor for writing
+      du2.set(BIT_FIELD1, 0x5C);
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 01 02 ff ff ff b9 ff                         ........"));
+      // expected failures checking
+      testSetBitsException(du0, 8, 8, 0);
+      testSetBitsException(du2, -1, 8, 0);
+      testSetBitsException(du2, 8, 0, 0);
+      testSetBitsException(du2, 8, 33, 0);
+      testSetBitsException(du2, 0, 8, 0x00000100);
+      testSetBitsException(du2, 128, 8, 1);
+
+      // test byte field read access
+      testGetBytes(du2, 2, 3, DU.toByteArray(DATA3));
+      // test accessor for reading
+      byte[] byteValue = du2.get(BYTE_FIELD1);
+      System.out.println("byteValue = " + DU.byteArrayToString(byteValue));
+      TestAssert((byteValue[0] == (byte) 0xB9) &&
+                 (byteValue[1] == (byte) 0xFF));
+      // expected failures checking
+      testGetBytesException(du0, 1, 1);
+      testGetBytesException(du2, -1, 1);
+      testGetBytesException(du2, 1, 0);
+      testGetBytesException(du2, 10, 1);
+
+      // test byte field write access
+      testSetBytes(du2, 1, 4, DU.toByteArray(DATA4), "\n" +
+        "0000 00 01 02 03 04 ff b9 ff                         ........");
+      // test accessor for writing
+      du2.set(BYTE_FIELD1, DU.toByteArray(DATA5));
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 01 02 03 04 ff 33 55                         ......3U"));
+      // expected failures checking
+      testSetBytesException(du0, 1, 1, new byte[1]);
+      testSetBytesException(du2, -1, 1, new byte[1]);
+      testSetBytesException(du2, 1, 0, new byte[1]);
+      testSetBytesException(du2, 1, 2, new byte[1]);
+      testSetBytesException(du2, 0, 10, new byte[10]);
+
+      // test integer field read access
+      testGetInt(du2, 1, 1, 0x00000001);
+      testGetInt(du2, 1, 2, 0x00000102);
+      testGetInt(du2, 1, 3, 0x00010203);
+      testGetInt(du2, 1, 4, 0x01020304);
+      // test accessor for reading
+      intValue = du2.get(INT_FIELD1);
+      System.out.println("intValue = " + String.format("%08x", intValue));
+      TestAssert(intValue == 0x00000304);
+      // expected failures checking
+      testGetIntException(du0, 1, 1);
+      testGetIntException(du2, -1, 1);
+      testGetIntException(du2, 1, 0);
+      testGetIntException(du2, 1, 5);
+      testGetIntException(du2, 10, 1);
+
+      // test integer field write access
+      testSetInt(du2, 1, 1, 0x000000F1, "\n" +
+        "0000 00 f1 02 03 04 ff 33 55                         ......3U");
+      testSetInt(du2, 1, 2, 0x0000F1F2, "\n" +
+        "0000 00 f1 f2 03 04 ff 33 55                         ......3U");
+      testSetInt(du2, 1, 3, 0x00F1F2F3, "\n" +
+        "0000 00 f1 f2 f3 04 ff 33 55                         ......3U");
+      testSetInt(du2, 1, 4, (int) 0xF1F2F3F4L, "\n" +
+        "0000 00 f1 f2 f3 f4 ff 33 55                         ......3U");
+      // test accessor for writing
+      du2.set(INT_FIELD1, 0x00009876);
+      dumpResult = du2.toString();
+      System.out.println("du2 = " + dumpResult);
+      TestAssert(dumpResult.equals("\n" +
+        "0000 00 f1 f2 98 76 ff 33 55                         ....v.3U"));
+      // expected failures checking
+      testSetIntException(du0, 1, 1, 0);
+      testSetIntException(du2, -1, 1, 0);
+      testSetIntException(du2, 1, 0, 0);
+      testSetIntException(du2, 1, 5, 0);
+      testSetIntException(du2, 1, 1, 0x00000100);
+      testSetIntException(du2, 1, 2, 0x00010000);
+      testSetIntException(du2, 1, 3, 0x01000000);
+      testSetIntException(du2, 10, 1, 0);
+
+      // end of test
+      System.out.println("*** test passed ***");
     }
     catch(Exception ex)
     {
       System.out.println("Exception = " + ex);
+      System.out.println("*** test failed ***");
     }
   }
 }
